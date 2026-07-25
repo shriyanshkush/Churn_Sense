@@ -1,0 +1,98 @@
+[
+  {
+    "feature": "Contract",
+    "importance": 1.592
+  },
+  {
+    "feature": "TotalCharges",
+    "importance": 0.7009
+  },
+  {
+    "feature": "SeniorCitizen",
+    "importance": 0.4063
+  },
+  {
+    "feature": "MonthlyCharges",
+    "importance": 0.3726
+  },
+  {
+    "feature": "gender",
+    "importance": 0.2553
+  },
+  {
+    "feature": "tenure",
+    "importance": 0.1176
+  },
+  {
+    "feature": "charges_per_service",
+    "importance": 0.1146
+  },
+  {
+    "feature": "OnlineSecurity",
+    "importance": 0.0615
+  },
+  {
+    "feature": "StreamingTV",
+    "importance": 0.0452
+  },
+  {
+    "feature": "InternetService",
+    "importance": 0.0389
+  },
+  {
+    "feature": "OnlineBackup",
+    "importance": 0.0348
+  },
+  {
+    "feature": "has_security_and_support",
+    "importance": 0.0296
+  },
+  {
+    "feature": "Dependents",
+    "importance": 0.025
+  },
+  {
+    "feature": "Partner",
+    "importance": 0.0249
+  },
+  {
+    "feature": "service_count",
+    "importance": 0.0207
+  },
+  {
+    "feature": "TechSupport",
+    "importance": 0.011
+  },
+  {
+    "feature": "DeviceProtection",
+    "importance": 0.0102
+  },
+  {
+    "feature": "StreamingMovies",
+    "importance": 0.0094
+  },
+  {
+    "feature": "PhoneService",
+    "importance": 0.0
+  },
+  {
+    "feature": "MultipleLines",
+    "importance": 0.0
+  },
+  {
+    "feature": "PaperlessBilling",
+    "importance": 0.0
+  },
+  {
+    "feature": "PaymentMethod",
+    "importance": 0.0
+  },
+  {
+    "feature": "tenure_bucket",
+    "importance": 0.0
+  },
+  {
+    "feature": "contract_risk",
+    "importance": 0.0
+  }
+]
