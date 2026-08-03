@@ -64,18 +64,26 @@ def predict_single_customer(input_data: CustomerInput) -> PredictionResponse:
     soft_clusters.sort(key=lambda x: x.probability, reverse=True)
     dominant_cluster_label = soft_clusters[0].cluster_name
 
-    # Local SHAP Waterfall
+    # Local SHAP Waterfall Calculation
     shap_impacts = []
     try:
         if model_name in ["xgboost", "random_forest", "decision_tree"]:
             explainer = shap.TreeExplainer(model)
-            shap_vals = explainer.shap_values(df_row)[0]
+            shap_raw = explainer.shap_values(df_row)
+            if isinstance(shap_raw, list) and len(shap_raw) == 2:
+                shap_vals = np.array(shap_raw[1]).flatten()
+            elif isinstance(shap_raw, np.ndarray) and shap_raw.ndim == 3:
+                shap_vals = shap_raw[0, :, 1]
+            elif isinstance(shap_raw, np.ndarray) and shap_raw.ndim == 2:
+                shap_vals = shap_raw[0]
+            else:
+                shap_vals = np.array(shap_raw).flatten()
         else:
             explainer = shap.LinearExplainer(model, model_manager.scaler.transform(df_row))
-            shap_vals = explainer.shap_values(X_scaled)[0]
+            shap_raw = explainer.shap_values(X_scaled)
+            shap_vals = np.array(shap_raw).flatten()
 
         for feat, val, s_val in zip(model_manager.feature_names, df_row.iloc[0].values, shap_vals):
-            # Show original input value for readability
             orig_val = input_dict.get(feat, val)
             shap_impacts.append(ShapFeatureImpact(
                 feature=feat,
@@ -86,21 +94,24 @@ def predict_single_customer(input_data: CustomerInput) -> PredictionResponse:
         shap_impacts = shap_impacts[:8]
     except Exception as e:
         print(f"Local SHAP notice: {e}")
+        # Fallback to feature importance if SHAP calculation encounters any edge case
+        if hasattr(model, 'feature_importances_'):
+            fi = model.feature_importances_
+            for feat, f_val in zip(model_manager.feature_names, fi):
+                shap_impacts.append(ShapFeatureImpact(
+                    feature=feat,
+                    value=input_dict.get(feat, 0),
+                    shap_value=round(float(f_val), 4)
+                ))
+            shap_impacts.sort(key=lambda x: abs(x.shap_value), reverse=True)
+            shap_impacts = shap_impacts[:8]
 
     # Survival Curve
     survival_pts = []
     try:
-        df_surv = pd.DataFrame([{
-            'MonthlyCharges': input_data.MonthlyCharges,
-            'is_month_to_month': 1 if input_data.Contract == 'Month-to-month' else 0,
-            'has_tech_support': 1 if input_data.TechSupport == 'Yes' else 0
-        }])
-        
-        # Estimate customer survival over months 1..72
         base_curve = model_manager.survival_baseline.get('survival_probability', [])
         timeline = model_manager.survival_baseline.get('timeline', list(range(1, 73)))
         
-        # Apply hazard multiplier based on risk tier
         hazard_mult = 1.8 if is_churn else 0.7
         for m, p in zip(timeline[::3], base_curve[::3]):
             p_adj = round(max(0.01, min(0.99, p ** hazard_mult)) * 100, 1)
@@ -136,7 +147,6 @@ def simulate_what_if(req: WhatIfRequest) -> WhatIfResponse:
     else:
         rec = "Minor impact on churn probability. Consider bundling TechSupport or converting to an Annual Contract."
 
-    # Compare top SHAP changes
     shap_changes = []
     base_shap_map = {item.feature: item.shap_value for item in baseline_res.shap_waterfall}
     for item in modified_res.shap_waterfall:
